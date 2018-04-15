@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, make_response
 app = Flask(__name__)
 
 @app.route('/')
@@ -13,6 +13,12 @@ def user(name):
 @app.route('/badrequest')
 def bad():
     return '<h1>Bad request</h1>', 400
+
+@app.route('/setcookie')
+def cookie():
+    response = make_response('<h1>This document carries a cookie!</h1>')
+    response.set_cookie('answer', '42')
+    return response
 
 if __name__ == '__main__':
     app.run(debug=True)
