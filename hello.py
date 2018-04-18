@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 from flask import Flask, request, make_response, redirect, abort, render_template, url_for, session, flash
-from flask_script import Manager
+from flask_script import Manager, Shell
 from flask_moment import Moment
 from flask_wtf import Form
 from wtforms import StringField, SubmitField
@@ -9,6 +9,8 @@ from wtforms.validators import Required
 from flask_sqlalchemy import SQLAlchemy
     
 # printenv --see enivironment variables in terminal
+# .bashrc --set environment variables
+# | grep --is like search (printenv | grep POSTGRES)
 
 def get_env_variable(name):
     try:
@@ -20,7 +22,7 @@ def get_env_variable(name):
 POSTGRES_URL = get_env_variable("POSTGRES_URL")
 POSTGRES_USER = get_env_variable("POSTGRES_USER")
 POSTGRES_PW = get_env_variable("POSTGRES_PW")
-POSTGRES_DB = get_env_variable("POSTGRES_DB")
+POSTGRES_DB = 'hello'
 DB_URL = 'postgres+psycopg2://{user}:{pw}@{url}/{db}'.format(user=POSTGRES_USER, 
                                                              pw=POSTGRES_PW, 
                                                              url=POSTGRES_URL, 
@@ -30,7 +32,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'hard to quess string'
 app.config['SQLALCHEMY_DATABASE_URI'] = DB_URL
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
-app.config['SQLACHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 manager = Manager(app)
 moment = Moment(app)
 db = SQLAlchemy(app)
@@ -43,7 +45,7 @@ class Role(db.Model):
     __tablename__ = 'roles'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), unique=True)
-    users = db.relationship('User', backref='role')
+    users = db.relationship('User', backref='role', lazy='dynamic')
 
     def __repr__(self):
         return '<Role %r>' % self.name
@@ -55,7 +57,11 @@ class User(db.Model):
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
 
     def __repr__(self):
-        return '<User %r>' % self.name
+        return '<User %r>' % self.username
+
+def make_shell_context():
+    return dict(app=app, db=db, User=User, Role=Role)
+manager.add_command("shell", Shell(make_context=make_shell_context))
 
 # @app.route('/')
 # def main():
@@ -66,13 +72,18 @@ class User(db.Model):
 def index():
     form = NameForm()
     if form.validate_on_submit():
-        old_name = session.get('name')
-        if old_name is not None and old_name != form.name.data:
-            flash('Looks like you have changed your name!')
+        user = User.query.filter_by(username=form.name.data).first()
+        if user is None:
+            user = User(username=form.name.data)
+            db.session.add(user)
+            session['known'] = False
+        else:
+            session['known'] = True
         session['name'] = form.name.data
+        form.name.data = ''
         return redirect(url_for('index'))
-    return render_template('index.html', form=form, name=session.get('name'))
-    # return render_template('index.html', current_time=datetime.utcnow())
+    return render_template('index.html', form=form, 
+                            name=session.get('name'), known=session.get('known', False))
 
 @app.route('/user/<name>')
 def get_user(name):
