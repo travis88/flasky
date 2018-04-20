@@ -8,6 +8,7 @@ from wtforms import StringField, SubmitField
 from wtforms.validators import Required
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate, MigrateCommand
+from flask_mail import Mail, Message
     
 # printenv --see enivironment variables in terminal
 # .bashrc --set environment variables
@@ -34,11 +35,20 @@ app.config['SECRET_KEY'] = 'hard to quess string'
 app.config['SQLALCHEMY_DATABASE_URI'] = DB_URL
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True   
+app.config['MAIL_USERNAME'] = get_env_variable('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = get_env_variable('MAIL_PASSWORD')
+app.config['FLASKY_ADMIN'] = get_env_variable('FLASKY_ADMIN')
+app.config['FLASKY_MAIL_SUBJECT_PREFIX'] = '[Flasky]'
+app.config['FLASKY_MAIL_SENDER'] = 'Flasky Admin <flasky@example.com>'
 manager = Manager(app)
 moment = Moment(app)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 manager.add_command('db', MigrateCommand)
+mail = Mail(app)
 
 class NameForm(Form):
     name = StringField('What is your name?', validators=[Required()])
@@ -66,6 +76,13 @@ def make_shell_context():
     return dict(app=app, db=db, User=User, Role=Role)
 manager.add_command("shell", Shell(make_context=make_shell_context))
 
+def send_mail(to, subject, template, **kwargs):
+    msg = Message(app.config['FLASKY_MAIL_SUBJECT_PREFIX'] + subject,
+                    sender=app.config['FLASKY_MAIL_SENDER'], recipients=[to])
+    msg.body = render_template(template + '.txt', **kwargs)
+    msg.html = render_template(template + '.html', **kwargs)
+    mail.send(msg)
+
 # @app.route('/')
 # def main():
 #     user_agent = request.headers.get('User-Agent')
@@ -80,6 +97,8 @@ def index():
             user = User(name=form.name.data, role_id=1)
             db.session.add(user)
             session['known'] = False
+            if app.config['FLASKY_ADMIN']:
+                send_mail(app.config['FLASKY_ADMIN'], 'New User', 'mail/new_user', user=user)
         else:
             session['known'] = True
         session['name'] = form.name.data
