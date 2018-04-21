@@ -26,21 +26,28 @@
                     <a href="/" class="navbar-brand">Flasky</a>
                 </div>
                 <div class="navbar-collapse collapse">
-                    <div class="nav navbar-nav">
-                        <li><a href="/">Home</a></li>
-                    </div>
+                    <ul class="nav navbar-nav">
+                        <li><a href="{{ url_for('main.index') }}">Home</a></li>
+                    </ul>
+                    <ul class="nav navbar-nav navbar-right">
+                        {% if current_user.is_authenticated %}
+                            <li><a href="{{ url_for('auth.logout') }}">Sign Out</a></li>
+                        {% else %}
+                            <li><a href="{{ url_for('auth.login') }}">Sign In</a></li>
+                        {% endif %}
+                    </ul>
                 </div>
             </div>
         </div>
-        {% endblock %}
+    {% endblock %}
         
-        <div class="container">
-            {% for message in get_flashed_messages() %}
-                <div class="alert alert-warning">
-                    <button type="button" class="close" data-dismiss="alert">&times;</button>
-                    {{ message }}
-                </div>
-            {% endfor %}
+    <div class="container">
+        {% for message in get_flashed_messages() %}
+            <div class="alert alert-warning">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                {{ message }}
+            </div>
+        {% endfor %}
         {% block content %}{% endblock %}
     </div>
 
