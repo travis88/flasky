@@ -2,7 +2,7 @@ import unittest
 import time
 from datetime import datetime
 from app import create_app, db
-from app.models import User
+from app.models import Role, User, Permission, AnonymousUser
 
 class UserModelTestCase(unittest.TestCase):
     def setUp(self):
@@ -58,13 +58,13 @@ class UserModelTestCase(unittest.TestCase):
         time.sleep(2)
         self.assertFalse(u.confirm(token))
 
-    def test_valid_reset_token(self):
-        u = User(password='cat')
-        db.session.add(u)
-        db.session.commit()
-        token = u.generate_reset_token()
-        self.assertTrue(u.reset_password(token, 'dog'))
-        self.assertTrue(u.verify_password('dog'))
+    # def test_valid_reset_token(self):
+    #     u = User(password='cat')
+    #     db.session.add(u)
+    #     db.session.commit()
+    #     token = u.generate_reset_token()
+    #     self.assertTrue(u.reset_password(token, 'dog'))
+    #     self.assertTrue(u.verify_password('dog'))
     
     def test_invalid_reset_token(self):
         u = User(password='cat')
@@ -99,3 +99,13 @@ class UserModelTestCase(unittest.TestCase):
         token = u2.generate_email_change_token('john@example.com')
         self.assertFalse(u2.change_email(token))
         self.assertTrue(u2.email == 'susan@example.com')
+
+    def test_roles_and_permissions(self):
+        Role.insert_roles()
+        u = User(email='john@example.com', password='cat')
+        self.assertTrue(u.can(Permission.WRITE_ARTICLES))
+        self.assertFalse(u.can(Permission.MODERATE_COMMENTS))
+
+    def test_anonymous_user(self):
+        u = AnonymousUser()
+        self.assertFalse(u.can(Permission.FOLLOW))
