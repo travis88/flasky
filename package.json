@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/travis88/flasky#readme",
   "dependencies": {
-    "bootstrap": "^3.3.6",
-    "jquery": "^3.0.0"
+    "bootstrap": "^3.3.7",
+    "jquery": "^3.1.1"
   }
 }
