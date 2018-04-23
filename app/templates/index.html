@@ -11,23 +11,40 @@
                 Stranger
             {% endif %}!
         </h1>
-        <!-- {% if not known %}
-            <p>Pleased to meet you!</p>
-        {% else %}
-            <p>Happy to see you again!</p>
-        {% endif %} -->
     </div>
-    <!-- <form method="POST">
-        {{ form.csrf_token }}
-        <div class="form-group">
-            {{ form.name.label }} 
-            {{ form.name(class='form-control') }}
-        </div>
-        {% for field in form.errors %}
-            {% for error in form.errors[field] %}
-                <div class="error">{{ error }}</div>
-            {% endfor %}
+    <div>
+        {% if current_user.can(Permission.WRITE_ARTICLES) %}
+            <form method="POST">
+                {{ form.csrf_token }}
+                <div class="form-group">
+                    {{ form.body.label }}
+                    {{ form.body(class='form-control') }}
+                </div>
+                {% for field in form.errors %}
+                    {% for error in form.errors[field] %}
+                        <div class="error">{{ error }}</div>
+                    {% endfor %}
+                {% endfor %}
+                {{ form.submit(class='btn btn-default') }}
+            </form>
+        {% endif %}
+    </div>
+    <ul class="posts">
+        {% for post in posts %}
+            <li class="post">
+                <div class="profile-thumbnail">
+                    <a href="{{ url_for('.user', name=post.author.name) }}">
+                        <img src="{{ post.author.gravatar(size=40) }}" alt="" class="img-rounded profile-thumbnail">
+                    </a>
+                </div>
+                <div class="post-date">{{ moment(post.timestamp).fromNow() }}</div>
+                <div class="post-author">
+                    <a href="{{ url_for('.user', name=post.author.name) }}">
+                        {{ post.author.name }}
+                    </a>
+                </div>
+                <div class="post-body">{{ post.body }}</div>
+            </li>
         {% endfor %}
-        {{ form.submit(class='btn btn-default') }}
-    </form> -->
+    </ul>
 {% endblock %}
