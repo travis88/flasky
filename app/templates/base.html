@@ -36,6 +36,7 @@
                     </li>
                     {% endif %}
                 </ul>
+                {% import "_macros.html" as macros %}
                 <ul class="nav navbar-nav navbar-right">
                     {% if current_user.can(Permission.MODERATE_COMMENTS) %}
                     <li>
