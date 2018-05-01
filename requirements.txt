@@ -37,6 +37,7 @@ pylint==1.8.4
 python-dateutil==2.7.2
 python-editor==1.0.3
 requests==2.18.4
+selenium==3.11.0
 six==1.11.0
 SQLAlchemy==1.2.6
 SQLAlchemy-Utils==0.33.2
