@@ -39,5 +39,27 @@ def test(coverage=False):
         print('HTML version: file://%s/index.html' % covdir)
         COV.erase()
 
+@manager.command
+def profile(length=25, profile_dir=None):
+    """Запускает приложение в режиме профилирования кода"""
+    from werkzeug.contrib.profiler import ProfilerMiddleware
+    app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[length], profile_dir=profile_dir)
+    app.run()
+
+@manager.command
+def deploy():
+    """Выполняет операции, связанные с развёртыванием"""
+    from flask_migrate import upgrade
+    from app.models import Role, User
+
+    # обновить базу данных до последней версии
+    upgrade()
+
+    # создать роли для пользователей
+    Role.insert_roles()
+
+    # объявить всех пользователей как читающих самих себя
+    User.add_self_follows()
+    
 if __name__ == '__main__':
     manager.run()
