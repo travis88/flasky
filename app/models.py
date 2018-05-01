@@ -74,7 +74,7 @@ class User(UserMixin, db.Model):
     followed = db.relationship('Follow', 
                                foreign_keys=[Follow.follower_id],
                                backref=db.backref('follower', lazy='joined'),
-                               lazy='dynamic',
+                               lazy='subquery',
                                cascade='all, delete-orphan')
     followers = db.relationship('Follow',
                                 foreign_keys=[Follow.followed_id],
@@ -207,10 +207,14 @@ class User(UserMixin, db.Model):
             db.session.delete(f)
     
     def is_following(self, user):
+        if user.id is None:
+            return False
         return self.followed.filter_by(
             followed_id=user.id).first() is not None
     
     def is_followed_by(self, user):
+        if user.id is None:
+            return False
         return self.followers.filter_by(
             follower_id=user.id).first() is not None
 
